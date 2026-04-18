@@ -1,48 +1,57 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>貓臉魚 - 文章閱讀</title>
+<meta name="description" content="貓臉魚小說閱讀頁面，收錄系列章節。"/>
 <style>
         :root {
-            /* 暖色調色彩計畫 */
-            --bg-color: #FDFBF7; /* 暖白背景 */
-            --sidebar-bg: #F3EBE1; /* 暖沙色 */
+            --bg-color: #FDFBF7;
+            --sidebar-bg: #F3EBE1;
             --sidebar-hover: #E8DAC6;
             --sidebar-active: #D4B895;
-            --text-main: #4A4036; /* 深棕灰文字 */
+            --surface-color: #FFFFFF;
+            --text-main: #4A4036;
             --text-light: #7A6F64;
-            --accent-color: #C08552; /* 暖橘棕色 */
+            --accent-color: #C08552;
+            --border-soft: rgba(0, 0, 0, 0.08);
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --focus-ring: 0 0 0 3px rgba(192, 133, 82, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
             margin: 0;
-            font-family: 'DFKai-SB', 'BiauKai', '標楷體', STKaiti, KaiTi, serif; 
+            font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", serif;
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
             background-color: var(--bg-color);
             color: var(--text-main);
-            overflow: hidden;
         }
 
-        /* 左側導覽列 */
         .sidebar {
             width: 280px;
             background-color: var(--sidebar-bg);
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
             z-index: 10;
         }
 
         .sidebar-header {
             padding: 30px 24px 20px;
             font-size: 1.3rem;
-            font-weight: bold;
+            font-weight: 700;
             color: var(--accent-color);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid var(--border-soft);
             letter-spacing: 1px;
         }
 
@@ -52,80 +61,163 @@
             padding: 10px 0;
         }
 
-        /* 隱藏捲軸美化 */
-        .nav-list::-webkit-scrollbar { width: 6px; }
-        .nav-list::-webkit-scrollbar-thumb { background: #D4B895; border-radius: 3px; }
+        .nav-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nav-list::-webkit-scrollbar-thumb {
+            background: #D4B895;
+            border-radius: 3px;
+        }
 
         .nav-item {
+            width: 100%;
             padding: 16px 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
             font-size: 1rem;
+            line-height: 1.5;
+            border: 0;
             border-left: 4px solid transparent;
+            background: transparent;
             color: var(--text-main);
+            text-align: left;
+            font: inherit;
         }
 
         .nav-item:hover {
             background-color: var(--sidebar-hover);
         }
 
+        .nav-item:focus-visible {
+            outline: none;
+            box-shadow: inset var(--focus-ring);
+        }
+
         .nav-item.active {
             background-color: var(--sidebar-active);
-            border-left: 4px solid var(--accent-color);
-            font-weight: bold;
+            border-left-color: var(--accent-color);
+            font-weight: 700;
             color: #332B23;
         }
 
-        /* 右側內容區 */
         .content-area {
             flex: 1;
             padding: 40px 60px;
             overflow-y: auto;
-            scroll-behavior: smooth;
         }
 
         .article-container {
-            max-width: 800px;
+            max-width: 860px;
             margin: 0 auto;
-            background: #FFFFFF;
+            background: var(--surface-color);
             padding: 40px 48px;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            box-shadow: var(--shadow-soft);
         }
 
         .article-title {
-            font-size: 1.9rem;
+            font-family: "DFKai-SB", "BiauKai", "標楷體", STKaiti, KaiTi, serif;
+            font-size: 1.95rem;
+            line-height: 1.4;
             margin-top: 0;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
             color: var(--accent-color);
             border-bottom: 2px solid var(--sidebar-bg);
             padding-bottom: 16px;
         }
 
+        .article-meta {
+            margin-bottom: 28px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
         .article-content {
-            font-size: 1rem;
-            line-height: 1.1;
-            white-space: pre-wrap; /* 保持 txt 原始換行格式 */
+            font-size: 1.05rem;
+            line-height: 1.95;
+            white-space: pre-wrap;
             color: var(--text-main);
             letter-spacing: 0.2px;
+            word-break: break-word;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: 16px;
+            top: -48px;
+            background: #FFFFFF;
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            box-shadow: var(--shadow-soft);
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 12px;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+
+            .nav-list {
+                max-height: 220px;
+            }
+
+            .content-area {
+                padding: 24px 16px 32px;
+                overflow: visible;
+            }
+
+            .article-container {
+                padding: 28px 20px;
+                border-radius: 10px;
+            }
+
+            .article-title {
+                font-size: 1.65rem;
+            }
+
+            .article-content {
+                font-size: 1rem;
+                line-height: 1.9;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .nav-item {
+                transition: none;
+            }
         }
     </style>
 </head>
 <body>
-<div class="sidebar">
+<a class="skip-link" href="#main-content">跳到文章內容</a>
+<aside class="sidebar" aria-label="文章導覽側欄">
 <div class="sidebar-header">目錄導覽</div>
-<div class="nav-list" id="sidebar-list">
-</div>
-</div>
-<div class="content-area" id="scroll-area">
-<div class="article-container">
+<nav class="nav-list" id="sidebar-list" aria-label="文章目錄"></nav>
+</aside>
+<main class="content-area" id="main-content" tabindex="-1">
+<article class="article-container">
 <h1 class="article-title" id="article-title">載入中...</h1>
+<div class="article-meta" id="article-meta" aria-live="polite"></div>
 <div class="article-content" id="article-content"></div>
-</div>
-</div>
+</article>
+</main>
 <script>
-        // 這裡封裝了 12 篇文章的資料結構
-        // (若部分內文省略，您可以直接把原本 txt 檔案的文字貼上替換 `...` 之間的部分)
         const articlesData = [
             {
                 title: "貓臉魚(01)",
@@ -2648,50 +2740,82 @@
             }
         ];
 
-        // 取得 DOM 元素
         const sidebarList = document.getElementById('sidebar-list');
         const articleTitle = document.getElementById('article-title');
+        const articleMeta = document.getElementById('article-meta');
         const articleContent = document.getElementById('article-content');
-        const scrollArea = document.getElementById('scroll-area');
+        const mainContent = document.getElementById('main-content');
 
-        // 初始化選單
-        function initSidebar() {
-            articlesData.forEach((article, index) => {
-                const btn = document.createElement('div');
-                btn.className = 'nav-item';
-                // 去除 .txt 後綴，讓顯示更乾淨
-                const displayName = article.title.replace('.txt', '');
-                btn.textContent = displayName;
-                
-                // 點擊事件
-                btn.onclick = () => loadArticle(index, btn);
-                
-                sidebarList.appendChild(btn);
+        function getInitialIndex() {
+            const matched = window.location.hash.match(/^#article-(\d+)$/);
+            if (!matched) return 0;
+            const index = Number(matched[1]);
+            return Number.isInteger(index) && index >= 0 && index < articlesData.length ? index : 0;
+        }
 
-                // 預設載入第一篇
-                if (index === 0) {
-                    loadArticle(index, btn);
-                }
+        function updateActiveState(activeButton) {
+            const items = sidebarList.querySelectorAll('.nav-item');
+            items.forEach((item) => {
+                const isActive = item === activeButton;
+                item.classList.toggle('active', isActive);
+                item.setAttribute('aria-current', isActive ? 'page' : 'false');
             });
         }
 
-        // 載入文章內容
-        function loadArticle(index, btnElement) {
-            // 1. 更新按鈕的 Active 狀態
-            const items = document.querySelectorAll('.nav-item');
-            items.forEach(item => item.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            // 2. 替換標題與內容
+        function loadArticle(index, btnElement, options = {}) {
             const article = articlesData[index];
-            articleTitle.textContent = article.title.replace('.txt', '');
+            if (!article) return;
+
+            updateActiveState(btnElement);
+            articleTitle.textContent = article.title;
+            articleMeta.textContent = `第 ${index + 1} 篇，共 ${articlesData.length} 篇`;
             articleContent.textContent = article.content;
-            
-            // 3. 瞬間捲動回頁首
-            scrollArea.scrollTop = 0;
+            document.title = `${article.title} - 貓臉魚`;
+
+            if (window.location.hash !== `#article-${index}`) {
+                history.replaceState(null, '', `#article-${index}`);
+            }
+
+            if (!options.preserveScroll) {
+                mainContent.scrollTop = 0;
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            }
         }
 
-        // 啟動程式
+        function createNavItem(article, index) {
+            const btn = document.createElement('button');
+            btn.className = 'nav-item';
+            btn.type = 'button';
+            btn.textContent = article.title;
+            btn.setAttribute('aria-label', `閱讀 ${article.title}`);
+            btn.addEventListener('click', () => loadArticle(index, btn));
+            return btn;
+        }
+
+        function initSidebar() {
+            const initialIndex = getInitialIndex();
+
+            articlesData.forEach((article, index) => {
+                const btn = createNavItem(article, index);
+                sidebarList.appendChild(btn);
+            });
+
+            const navButtons = sidebarList.querySelectorAll('.nav-item');
+            const initialButton = navButtons[initialIndex] || navButtons[0];
+            if (initialButton) {
+                loadArticle(initialIndex, initialButton, { preserveScroll: true });
+            }
+        }
+
+        window.addEventListener('hashchange', () => {
+            const index = getInitialIndex();
+            const navButtons = sidebarList.querySelectorAll('.nav-item');
+            const targetButton = navButtons[index];
+            if (targetButton) {
+                loadArticle(index, targetButton, { preserveScroll: true });
+            }
+        });
+
         initSidebar();
     </script>
 </body>
