@@ -310,10 +310,11 @@ function escapeHtml(text) {
 
 function getSelectedNovelConfig() {
     if (novelSelect.value === 'custom') {
+        const folder = slugify(customFolderName.value.trim());
         return {
             title: customNovelTitle.value.trim(),
-            folder: slugify(customFolderName.value.trim()),
-            dataFile: `data/${slugify(customFolderName.value.trim())}.json`
+            folder,
+            dataFile: folder ? `data/${folder}.json` : ''
         };
     }
     return novelDefaults[novelSelect.value];
