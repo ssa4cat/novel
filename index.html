@@ -142,6 +142,10 @@
             word-break: break-word;
         }
 
+        .mobile-bottom-nav {
+            display: none;
+        }
+
         .skip-link {
             position: absolute;
             left: 16px;
@@ -191,6 +195,42 @@
                 font-size: 1rem;
                 line-height: 1.9;
             }
+
+            .mobile-bottom-nav {
+                display: flex;
+                gap: 12px;
+                margin-top: 28px;
+                padding-top: 20px;
+                border-top: 1px solid var(--border-soft);
+            }
+
+            .mobile-chapter-button {
+                flex: 1;
+                min-height: 48px;
+                border: 0;
+                border-radius: 12px;
+                background: var(--sidebar-bg);
+                color: var(--text-main);
+                font: inherit;
+                font-size: 0.98rem;
+                padding: 12px 14px;
+                text-align: center;
+                cursor: pointer;
+            }
+
+            .mobile-chapter-button.next {
+                background: var(--accent-color);
+                color: #FFFDF9;
+            }
+
+            .mobile-chapter-button:focus-visible {
+                outline: none;
+                box-shadow: var(--focus-ring);
+            }
+
+            .mobile-chapter-button[hidden] {
+                display: none;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -215,6 +255,10 @@
 <h1 class="article-title" id="article-title">載入中...</h1>
 <div class="article-meta" id="article-meta" aria-live="polite"></div>
 <div class="article-content" id="article-content"></div>
+<div class="mobile-bottom-nav" aria-label="手機章節導覽">
+<button class="mobile-chapter-button prev" id="mobile-prev-button" type="button">上一頁</button>
+<button class="mobile-chapter-button next" id="mobile-next-button" type="button">下一頁</button>
+</div>
 </article>
 </main>
 <script>
@@ -2745,6 +2789,8 @@
         const articleMeta = document.getElementById('article-meta');
         const articleContent = document.getElementById('article-content');
         const mainContent = document.getElementById('main-content');
+        const mobilePrevButton = document.getElementById('mobile-prev-button');
+        const mobileNextButton = document.getElementById('mobile-next-button');
 
         function getInitialIndex() {
             const matched = window.location.hash.match(/^#article-(\d+)$/);
@@ -2762,11 +2808,47 @@
             });
         }
 
+        function navigateToArticle(index) {
+            const navButtons = sidebarList.querySelectorAll('.nav-item');
+            const targetButton = navButtons[index];
+            if (targetButton) {
+                loadArticle(index, targetButton);
+            }
+        }
+
+        function updateMobileButtons(index) {
+            const hasPrev = index > 0;
+            mobilePrevButton.hidden = !hasPrev;
+            mobilePrevButton.disabled = !hasPrev;
+
+            if (hasPrev) {
+                mobilePrevButton.textContent = `上一頁｜${articlesData[index - 1].title}`;
+                mobilePrevButton.setAttribute('aria-label', `上一頁：${articlesData[index - 1].title}`);
+                mobilePrevButton.onclick = () => navigateToArticle(index - 1);
+            } else {
+                mobilePrevButton.textContent = '上一頁';
+                mobilePrevButton.removeAttribute('aria-label');
+                mobilePrevButton.onclick = null;
+            }
+
+            const isLast = index === articlesData.length - 1;
+            if (isLast) {
+                mobileNextButton.textContent = '回到第一頁';
+                mobileNextButton.setAttribute('aria-label', `回到第一頁：${articlesData[0].title}`);
+                mobileNextButton.onclick = () => navigateToArticle(0);
+            } else {
+                mobileNextButton.textContent = `下一頁｜${articlesData[index + 1].title}`;
+                mobileNextButton.setAttribute('aria-label', `下一頁：${articlesData[index + 1].title}`);
+                mobileNextButton.onclick = () => navigateToArticle(index + 1);
+            }
+        }
+
         function loadArticle(index, btnElement, options = {}) {
             const article = articlesData[index];
             if (!article) return;
 
             updateActiveState(btnElement);
+            updateMobileButtons(index);
             articleTitle.textContent = article.title;
             articleMeta.textContent = `第 ${index + 1} 篇，共 ${articlesData.length} 篇`;
             articleContent.textContent = article.content;
