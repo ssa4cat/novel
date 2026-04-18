@@ -2,14 +2,17 @@
 <html lang="zh-TW">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>亙古之初 - 文章閱讀</title>
 <style>
 body{margin:0;font-family:"Noto Serif TC","Microsoft JhengHei",serif;background:#FDFBF7;color:#4A4036;display:flex}
-.sidebar{width:260px;background:#F3EBE1;padding:20px}
-.nav-item{display:block;padding:10px;cursor:pointer}
-.nav-item.active{background:#D4B895}
-.content{flex:1;padding:20px}
+.sidebar{width:300px;background:#F3EBE1;padding:20px}
+.nav-item{display:block;padding:14px;cursor:pointer}
+.nav-item.active{background:#D4B895;font-weight:bold}
+.content{flex:1;padding:40px 60px}
+.article{max-width:800px;margin:auto;background:#fff;padding:40px;border-radius:10px}
+.title{font-size:1.8rem;color:#C08552;margin-bottom:20px}
+.meta{color:#7A6F64;margin-bottom:20px}
 </style>
 </head>
 <body>
@@ -18,13 +21,17 @@ body{margin:0;font-family:"Noto Serif TC","Microsoft JhengHei",serif;background:
 <div id="nav"></div>
 </div>
 <div class="content">
-<h1 id="title"></h1>
+<div class="article">
+<div class="title" id="title"></div>
+<div class="meta" id="meta"></div>
 <div id="content">載入中...</div>
+</div>
 </div>
 <script>
 let data=[];
 const nav=document.getElementById('nav');
 const titleEl=document.getElementById('title');
+const metaEl=document.getElementById('meta');
 const contentEl=document.getElementById('content');
 
 fetch('data/eternal-beginning.json')
@@ -41,14 +48,17 @@ function renderNav(){
   const btn=document.createElement('div');
   btn.className='nav-item';
   btn.textContent=ch.label;
-  btn.onclick=()=>load(i);
+  btn.onclick=()=>load(i,btn);
   nav.appendChild(btn);
  });
 }
 
-function load(i){
+function load(i,btn){
  const ch=data[i];
  titleEl.textContent=ch.title;
+ metaEl.textContent=ch.subtitle||'';
+ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+ if(btn) btn.classList.add('active');
  fetch(ch.file)
  .then(r=>r.text())
  .then(html=>{
