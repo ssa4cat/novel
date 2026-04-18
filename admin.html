@@ -23,7 +23,7 @@ body{
     font-family:"Noto Serif TC","Microsoft JhengHei",serif;
 }
 .wrap{
-    max-width:1080px;
+    max-width:1200px;
     margin:0 auto;
     padding:32px 16px 48px;
 }
@@ -80,6 +80,12 @@ body{
     resize:vertical;
     line-height:1.8;
 }
+.textarea.output-large{
+    min-height:300px;
+}
+.textarea.output-small{
+    min-height:180px;
+}
 .button-row{
     display:flex;
     gap:10px;
@@ -109,13 +115,27 @@ body{
     color:var(--accent);
     font-size:0.95rem;
 }
-.copy-box{
-    min-height:420px;
-}
 .inline-row{
     display:grid;
     grid-template-columns:1fr 180px;
     gap:12px;
+}
+.output-stack{
+    display:grid;
+    gap:18px;
+}
+.output-group h3{
+    margin:0 0 10px;
+    font-size:1rem;
+}
+.path-box{
+    padding:10px 12px;
+    border-radius:10px;
+    background:var(--soft);
+    color:var(--text);
+    font-size:0.92rem;
+    word-break:break-all;
+    line-height:1.6;
 }
 @media (max-width: 900px){
     .layout{grid-template-columns:1fr}
@@ -127,7 +147,7 @@ body{
 <div class="wrap">
     <div class="header">
         <h1>小說後台工具</h1>
-        <p>這是一個靜態管理頁。你可以選作品、填章節資訊、直接貼內容或上傳 txt，系統會幫你產生可貼進小說頁的章節物件。它不會自動寫回 GitHub，但能大幅降低你手動整理格式的成本。</p>
+        <p>這是一個靜態管理頁。你可以選作品、填章節資訊、直接貼內容或上傳 txt。系統會幫你產生章節 HTML 檔與 JSON 索引項目，並提供下載，方便你放進 <code>chapters/</code> 與 <code>data/</code> 架構中。</p>
     </div>
 
     <div class="layout">
@@ -148,8 +168,13 @@ body{
                 <input id="custom-novel-title" class="input" type="text" placeholder="例如：星海餘燼">
             </div>
 
+            <div class="field" id="custom-folder-field" style="display:none;">
+                <label for="custom-folder-name">自訂資料夾名稱</label>
+                <input id="custom-folder-name" class="input" type="text" placeholder="例如：starlit-embers">
+            </div>
+
             <div class="field">
-                <label for="chapter-id">章節 ID</label>
+                <label for="chapter-id">章節 ID / 檔名基底</label>
                 <input id="chapter-id" class="input" type="text" placeholder="例如：ch1 或 prologue">
             </div>
 
@@ -186,7 +211,7 @@ body{
             </div>
 
             <div class="button-row">
-                <button class="button primary" id="generate-button" type="button">產生章節物件</button>
+                <button class="button primary" id="generate-button" type="button">產生 HTML 與索引</button>
                 <button class="button" id="clear-button" type="button">清空</button>
                 <button class="button" id="reload-file-button" type="button">依目前編碼重新讀取</button>
                 <button class="button" id="fill-eternal-prologue" type="button">套用亙古之初範例</button>
@@ -194,19 +219,32 @@ body{
 
             <div class="status" id="status-text"></div>
             <div class="tip">如果你的文字檔都是 Big5，就保持右邊編碼選單為 <code>Big5（預設）</code>。若遇到亂碼，再改成 UTF-8 重新讀取。</div>
-            <div class="tip">使用方式：先填好欄位，按「產生章節物件」，再把右側輸出的內容貼進對應小說頁的 <code>articlesData</code> 陣列中。</div>
+            <div class="tip">這個後台會幫你自動把純文字轉成段落 HTML，並產出 JSON 索引項目。你只要把下載好的檔案放到對應資料夾，再把 JSON 項目貼進對應作品的索引檔即可。</div>
         </section>
 
         <section class="panel">
             <h2>輸出結果</h2>
-            <textarea id="output-text" class="textarea copy-box" readonly placeholder="產生後會出現在這裡"></textarea>
-            <div class="button-row" style="margin-top:12px;">
-                <button class="button primary" id="copy-button" type="button">複製輸出內容</button>
+            <div class="output-stack">
+                <div class="output-group">
+                    <h3>建議章節 HTML 路徑</h3>
+                    <div id="html-path" class="path-box">尚未產生</div>
+                    <textarea id="html-output" class="textarea output-large" readonly placeholder="產生後會出現章節 HTML"></textarea>
+                    <div class="button-row" style="margin-top:12px;">
+                        <button class="button primary" id="download-html-button" type="button">下載 HTML 檔</button>
+                        <button class="button" id="copy-html-button" type="button">複製 HTML</button>
+                    </div>
+                </div>
+
+                <div class="output-group">
+                    <h3>建議 JSON 索引項目</h3>
+                    <div id="json-path" class="path-box">尚未產生</div>
+                    <textarea id="json-output" class="textarea output-small" readonly placeholder="產生後會出現 JSON 索引項目"></textarea>
+                    <div class="button-row" style="margin-top:12px;">
+                        <button class="button primary" id="copy-json-button" type="button">複製 JSON 項目</button>
+                    </div>
+                </div>
             </div>
-            <div class="tip">
-                建議維護方式：每新增一章，就把這裡輸出的物件貼到對應小說頁的 <code>articlesData = [ ... ]</code> 裡面。<br>
-                未來如果你要，我可以再幫你進一步做成「讀取 JSON / TXT 檔」的版本，讓內容不必再塞進 HTML 裡。
-            </div>
+            <div class="tip">章節 HTML 檔請放進 <code>chapters/作品資料夾/</code>；JSON 項目請貼進 <code>data/作品.json</code> 陣列中，並記得補上逗號位置。</div>
         </section>
     </div>
 </div>
@@ -215,6 +253,8 @@ body{
 const novelSelect = document.getElementById('novel-select');
 const customNovelField = document.getElementById('custom-novel-field');
 const customNovelTitle = document.getElementById('custom-novel-title');
+const customFolderField = document.getElementById('custom-folder-field');
+const customFolderName = document.getElementById('custom-folder-name');
 const chapterId = document.getElementById('chapter-id');
 const chapterLabel = document.getElementById('chapter-label');
 const chapterTitle = document.getElementById('chapter-title');
@@ -225,25 +265,79 @@ const chapterContent = document.getElementById('chapter-content');
 const generateButton = document.getElementById('generate-button');
 const clearButton = document.getElementById('clear-button');
 const reloadFileButton = document.getElementById('reload-file-button');
-const outputText = document.getElementById('output-text');
-const copyButton = document.getElementById('copy-button');
 const statusText = document.getElementById('status-text');
 const fillEternalPrologue = document.getElementById('fill-eternal-prologue');
 
+const htmlPath = document.getElementById('html-path');
+const htmlOutput = document.getElementById('html-output');
+const jsonPath = document.getElementById('json-path');
+const jsonOutput = document.getElementById('json-output');
+const downloadHtmlButton = document.getElementById('download-html-button');
+const copyHtmlButton = document.getElementById('copy-html-button');
+const copyJsonButton = document.getElementById('copy-json-button');
+
 const novelDefaults = {
-    'catfish': '貓臉魚',
-    'eternal-beginning': '亙古之初'
+    'catfish': {
+        title: '貓臉魚',
+        folder: 'catfish',
+        dataFile: 'data/catfish.json'
+    },
+    'eternal-beginning': {
+        title: '亙古之初',
+        folder: 'eternal-beginning',
+        dataFile: 'data/eternal-beginning.json'
+    }
 };
 
-function escapeTemplateLiteral(text) {
-    return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+let generatedHtmlFilename = '';
+
+function slugify(value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-_]/g, '-');
 }
 
-function getSelectedNovelName() {
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function getSelectedNovelConfig() {
     if (novelSelect.value === 'custom') {
-        return customNovelTitle.value.trim();
+        return {
+            title: customNovelTitle.value.trim(),
+            folder: slugify(customFolderName.value.trim()),
+            dataFile: `data/${slugify(customFolderName.value.trim())}.json`
+        };
     }
-    return novelDefaults[novelSelect.value] || '';
+    return novelDefaults[novelSelect.value];
+}
+
+function updateCustomFields() {
+    const isCustom = novelSelect.value === 'custom';
+    customNovelField.style.display = isCustom ? 'block' : 'none';
+    customFolderField.style.display = isCustom ? 'block' : 'none';
+}
+
+function buildChapterHtml(rawContent) {
+    const normalized = rawContent.replace(/\r\n/g, '\n').trim();
+    const paragraphs = normalized
+        .split(/\n{2,}/)
+        .map(block => block.split('\n').map(line => escapeHtml(line)).join('<br>'))
+        .map(block => `<p>${block}</p>`)
+        .join('\n');
+
+    return `<div class="chapter-body">\n${paragraphs}\n</div>`;
+}
+
+function buildJsonEntry(id, label, title, subtitle, filePath) {
+    return JSON.stringify({ id, label, title, subtitle, file: filePath }, null, 2);
 }
 
 async function readSelectedFile() {
@@ -260,16 +354,34 @@ async function readSelectedFile() {
     statusText.textContent = `已使用 ${fileEncoding.value.toUpperCase()} 載入檔案：${file.name}`;
 }
 
-novelSelect.addEventListener('change', () => {
-    customNovelField.style.display = novelSelect.value === 'custom' ? 'block' : 'none';
-});
+function downloadTextFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
 
+async function copyText(text, successMessage) {
+    if (!text.trim()) {
+        statusText.textContent = '目前沒有可複製的內容。';
+        return;
+    }
+    await navigator.clipboard.writeText(text);
+    statusText.textContent = successMessage;
+}
+
+novelSelect.addEventListener('change', updateCustomFields);
 chapterFile.addEventListener('change', readSelectedFile);
 reloadFileButton.addEventListener('click', readSelectedFile);
 
 fillEternalPrologue.addEventListener('click', () => {
     novelSelect.value = 'eternal-beginning';
-    customNovelField.style.display = 'none';
+    updateCustomFields();
     chapterId.value = 'prologue';
     chapterLabel.value = '序章';
     chapterTitle.value = '亙古之初-序章';
@@ -278,15 +390,15 @@ fillEternalPrologue.addEventListener('click', () => {
 });
 
 generateButton.addEventListener('click', () => {
-    const novelName = getSelectedNovelName();
+    const novelConfig = getSelectedNovelConfig();
     const id = chapterId.value.trim();
     const label = chapterLabel.value.trim();
     const title = chapterTitle.value.trim();
     const subtitle = chapterSubtitle.value.trim();
     const content = chapterContent.value;
 
-    if (!novelName) {
-        statusText.textContent = '請先填寫作品名稱。';
+    if (!novelConfig?.title || !novelConfig?.folder) {
+        statusText.textContent = '請先填寫作品名稱與資料夾名稱。';
         return;
     }
     if (!id || !label || !title || !content.trim()) {
@@ -294,16 +406,16 @@ generateButton.addEventListener('click', () => {
         return;
     }
 
-    const generated = `{
-    id: '${id}',
-    label: '${label}',
-    title: '${title}',
-    subtitle: '${subtitle}',
-    content: \`${escapeTemplateLiteral(content)}\`
-}`;
+    generatedHtmlFilename = `${id}.html`;
+    const chapterHtml = buildChapterHtml(content);
+    const chapterFilePath = `chapters/${novelConfig.folder}/${generatedHtmlFilename}`;
+    const jsonEntry = buildJsonEntry(id, label, title, subtitle, chapterFilePath);
 
-    outputText.value = generated;
-    statusText.textContent = `已為《${novelName}》產生章節物件。`;
+    htmlPath.textContent = chapterFilePath;
+    htmlOutput.value = chapterHtml;
+    jsonPath.textContent = novelConfig.dataFile;
+    jsonOutput.value = jsonEntry;
+    statusText.textContent = `已為《${novelConfig.title}》產生章節 HTML 與 JSON 索引項目。`;
 });
 
 clearButton.addEventListener('click', () => {
@@ -313,18 +425,27 @@ clearButton.addEventListener('click', () => {
     chapterSubtitle.value = '';
     chapterContent.value = '';
     chapterFile.value = '';
-    outputText.value = '';
+    htmlPath.textContent = '尚未產生';
+    htmlOutput.value = '';
+    jsonPath.textContent = '尚未產生';
+    jsonOutput.value = '';
+    generatedHtmlFilename = '';
     statusText.textContent = '已清空。';
 });
 
-copyButton.addEventListener('click', async () => {
-    if (!outputText.value.trim()) {
-        statusText.textContent = '目前沒有可複製的內容。';
+downloadHtmlButton.addEventListener('click', () => {
+    if (!htmlOutput.value.trim() || !generatedHtmlFilename) {
+        statusText.textContent = '目前沒有可下載的 HTML 內容。';
         return;
     }
-    await navigator.clipboard.writeText(outputText.value);
-    statusText.textContent = '已複製到剪貼簿。';
+    downloadTextFile(generatedHtmlFilename, htmlOutput.value, 'text/html;charset=utf-8');
+    statusText.textContent = `已下載 ${generatedHtmlFilename}`;
 });
+
+copyHtmlButton.addEventListener('click', () => copyText(htmlOutput.value, '已複製章節 HTML。'));
+copyJsonButton.addEventListener('click', () => copyText(jsonOutput.value, '已複製 JSON 索引項目。'));
+
+updateCustomFields();
 </script>
 </body>
 </html>
