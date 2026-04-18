@@ -98,12 +98,6 @@ body{
     background:var(--accent);
     color:#fff;
 }
-.output{
-    min-height:420px;
-    white-space:pre-wrap;
-    word-break:break-word;
-    background:#fff;
-}
 .tip{
     margin-top:12px;
     font-size:0.92rem;
@@ -118,8 +112,14 @@ body{
 .copy-box{
     min-height:420px;
 }
+.inline-row{
+    display:grid;
+    grid-template-columns:1fr 180px;
+    gap:12px;
+}
 @media (max-width: 900px){
     .layout{grid-template-columns:1fr}
+    .inline-row{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -170,7 +170,14 @@ body{
 
             <div class="field">
                 <label for="chapter-file">上傳 txt 檔</label>
-                <input id="chapter-file" class="file" type="file" accept=".txt,text/plain">
+                <div class="inline-row">
+                    <input id="chapter-file" class="file" type="file" accept=".txt,text/plain">
+                    <select id="file-encoding" class="select">
+                        <option value="big5" selected>Big5（預設）</option>
+                        <option value="utf-8">UTF-8</option>
+                        <option value="utf-16le">UTF-16 LE</option>
+                    </select>
+                </div>
             </div>
 
             <div class="field">
@@ -181,10 +188,12 @@ body{
             <div class="button-row">
                 <button class="button primary" id="generate-button" type="button">產生章節物件</button>
                 <button class="button" id="clear-button" type="button">清空</button>
+                <button class="button" id="reload-file-button" type="button">依目前編碼重新讀取</button>
                 <button class="button" id="fill-eternal-prologue" type="button">套用亙古之初範例</button>
             </div>
 
             <div class="status" id="status-text"></div>
+            <div class="tip">如果你的文字檔都是 Big5，就保持右邊編碼選單為 <code>Big5（預設）</code>。若遇到亂碼，再改成 UTF-8 重新讀取。</div>
             <div class="tip">使用方式：先填好欄位，按「產生章節物件」，再把右側輸出的內容貼進對應小說頁的 <code>articlesData</code> 陣列中。</div>
         </section>
 
@@ -211,9 +220,11 @@ const chapterLabel = document.getElementById('chapter-label');
 const chapterTitle = document.getElementById('chapter-title');
 const chapterSubtitle = document.getElementById('chapter-subtitle');
 const chapterFile = document.getElementById('chapter-file');
+const fileEncoding = document.getElementById('file-encoding');
 const chapterContent = document.getElementById('chapter-content');
 const generateButton = document.getElementById('generate-button');
 const clearButton = document.getElementById('clear-button');
+const reloadFileButton = document.getElementById('reload-file-button');
 const outputText = document.getElementById('output-text');
 const copyButton = document.getElementById('copy-button');
 const statusText = document.getElementById('status-text');
@@ -235,17 +246,26 @@ function getSelectedNovelName() {
     return novelDefaults[novelSelect.value] || '';
 }
 
+async function readSelectedFile() {
+    const file = chapterFile.files?.[0];
+    if (!file) {
+        statusText.textContent = '請先選擇 txt 檔。';
+        return;
+    }
+
+    const buffer = await file.arrayBuffer();
+    const decoder = new TextDecoder(fileEncoding.value, { fatal: false });
+    const text = decoder.decode(buffer);
+    chapterContent.value = text;
+    statusText.textContent = `已使用 ${fileEncoding.value.toUpperCase()} 載入檔案：${file.name}`;
+}
+
 novelSelect.addEventListener('change', () => {
     customNovelField.style.display = novelSelect.value === 'custom' ? 'block' : 'none';
 });
 
-chapterFile.addEventListener('change', async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    chapterContent.value = text;
-    statusText.textContent = `已載入檔案：${file.name}`;
-});
+chapterFile.addEventListener('change', readSelectedFile);
+reloadFileButton.addEventListener('click', readSelectedFile);
 
 fillEternalPrologue.addEventListener('click', () => {
     novelSelect.value = 'eternal-beginning';
