@@ -18,6 +18,8 @@
             --border-soft: rgba(0, 0, 0, 0.08);
             --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
             --focus-ring: 0 0 0 3px rgba(192, 133, 82, 0.28);
+            --mobile-article-font-size: 1rem;
+            --mobile-article-line-height: 1.9;
         }
 
         * {
@@ -142,6 +144,7 @@
             word-break: break-word;
         }
 
+        .mobile-reading-toolbar,
         .mobile-bottom-nav {
             display: none;
         }
@@ -191,9 +194,50 @@
                 font-size: 1.65rem;
             }
 
-            .article-content {
+            .mobile-reading-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 18px;
+                padding: 12px 14px;
+                border-radius: 12px;
+                background: var(--sidebar-bg);
+            }
+
+            .mobile-reading-label {
+                color: var(--text-light);
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+
+            .mobile-font-controls {
+                display: flex;
+                gap: 8px;
+            }
+
+            .mobile-font-button {
+                min-width: 44px;
+                min-height: 40px;
+                border: 0;
+                border-radius: 10px;
+                background: #FFFFFF;
+                color: var(--text-main);
+                font: inherit;
                 font-size: 1rem;
-                line-height: 1.9;
+                font-weight: 700;
+                cursor: pointer;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+
+            .mobile-font-button:focus-visible {
+                outline: none;
+                box-shadow: var(--focus-ring);
+            }
+
+            .article-content {
+                font-size: var(--mobile-article-font-size);
+                line-height: var(--mobile-article-line-height);
             }
 
             .mobile-bottom-nav {
@@ -252,6 +296,13 @@
 </aside>
 <main class="content-area" id="main-content" tabindex="-1">
 <article class="article-container">
+<div class="mobile-reading-toolbar" aria-label="手機閱讀設定">
+<span class="mobile-reading-label" id="mobile-font-size-label">字體大小：標準</span>
+<div class="mobile-font-controls">
+<button class="mobile-font-button" id="mobile-font-decrease" type="button" aria-label="縮小字體">A−</button>
+<button class="mobile-font-button" id="mobile-font-increase" type="button" aria-label="放大字體">A＋</button>
+</div>
+</div>
 <h1 class="article-title" id="article-title">載入中...</h1>
 <div class="article-meta" id="article-meta" aria-live="polite"></div>
 <div class="article-content" id="article-content"></div>
@@ -2784,6 +2835,14 @@
             }
         ];
 
+        const FONT_SIZE_STORAGE_KEY = 'novel-mobile-font-size-index';
+        const MOBILE_FONT_PRESETS = [
+            { label: '較小', fontSize: '0.92rem', lineHeight: '1.82' },
+            { label: '標準', fontSize: '1rem', lineHeight: '1.9' },
+            { label: '較大', fontSize: '1.08rem', lineHeight: '1.98' },
+            { label: '很大', fontSize: '1.16rem', lineHeight: '2.05' }
+        ];
+
         const sidebarList = document.getElementById('sidebar-list');
         const articleTitle = document.getElementById('article-title');
         const articleMeta = document.getElementById('article-meta');
@@ -2791,12 +2850,38 @@
         const mainContent = document.getElementById('main-content');
         const mobilePrevButton = document.getElementById('mobile-prev-button');
         const mobileNextButton = document.getElementById('mobile-next-button');
+        const mobileFontDecreaseButton = document.getElementById('mobile-font-decrease');
+        const mobileFontIncreaseButton = document.getElementById('mobile-font-increase');
+        const mobileFontSizeLabel = document.getElementById('mobile-font-size-label');
+
+        let mobileFontPresetIndex = 1;
 
         function getInitialIndex() {
             const matched = window.location.hash.match(/^#article-(\d+)$/);
             if (!matched) return 0;
             const index = Number(matched[1]);
             return Number.isInteger(index) && index >= 0 && index < articlesData.length ? index : 0;
+        }
+
+        function getStoredFontPresetIndex() {
+            const savedIndex = Number(window.localStorage.getItem(FONT_SIZE_STORAGE_KEY));
+            if (Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < MOBILE_FONT_PRESETS.length) {
+                return savedIndex;
+            }
+            return 1;
+        }
+
+        function applyMobileFontPreset(index) {
+            const preset = MOBILE_FONT_PRESETS[index];
+            if (!preset) return;
+
+            mobileFontPresetIndex = index;
+            document.documentElement.style.setProperty('--mobile-article-font-size', preset.fontSize);
+            document.documentElement.style.setProperty('--mobile-article-line-height', preset.lineHeight);
+            mobileFontSizeLabel.textContent = `字體大小：${preset.label}`;
+            mobileFontDecreaseButton.disabled = index === 0;
+            mobileFontIncreaseButton.disabled = index === MOBILE_FONT_PRESETS.length - 1;
+            window.localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(index));
         }
 
         function updateActiveState(activeButton) {
@@ -2874,6 +2959,22 @@
             return btn;
         }
 
+        function initMobileFontControls() {
+            applyMobileFontPreset(getStoredFontPresetIndex());
+
+            mobileFontDecreaseButton.addEventListener('click', () => {
+                if (mobileFontPresetIndex > 0) {
+                    applyMobileFontPreset(mobileFontPresetIndex - 1);
+                }
+            });
+
+            mobileFontIncreaseButton.addEventListener('click', () => {
+                if (mobileFontPresetIndex < MOBILE_FONT_PRESETS.length - 1) {
+                    applyMobileFontPreset(mobileFontPresetIndex + 1);
+                }
+            });
+        }
+
         function initSidebar() {
             const initialIndex = getInitialIndex();
 
@@ -2898,6 +2999,7 @@
             }
         });
 
+        initMobileFontControls();
         initSidebar();
     </script>
 </body>
