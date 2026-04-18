@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小說後台工具</title>
+<style>
+:root {
+    --bg:#FDFBF7;
+    --surface:#FFFFFF;
+    --soft:#F3EBE1;
+    --text:#4A4036;
+    --muted:#7A6F64;
+    --accent:#C08552;
+    --border:rgba(0,0,0,0.08);
+    --shadow:0 8px 24px rgba(0,0,0,0.05);
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Noto Serif TC","Microsoft JhengHei",serif;
+}
+.wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:32px 16px 48px;
+}
+.header{
+    margin-bottom:24px;
+}
+.header h1{
+    margin:0 0 10px;
+    font-size:2rem;
+}
+.header p{
+    margin:0;
+    color:var(--muted);
+    line-height:1.8;
+}
+.layout{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+.panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:20px;
+}
+.panel h2{
+    margin:0 0 16px;
+    font-size:1.25rem;
+}
+.field{
+    margin-bottom:16px;
+}
+.field label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:700;
+}
+.input,
+.select,
+.textarea,
+.file{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#fff;
+    color:var(--text);
+    font:inherit;
+    padding:12px 14px;
+}
+.textarea{
+    min-height:180px;
+    resize:vertical;
+    line-height:1.8;
+}
+.button-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+.button{
+    border:0;
+    border-radius:12px;
+    padding:12px 16px;
+    font:inherit;
+    cursor:pointer;
+    background:var(--soft);
+    color:var(--text);
+}
+.button.primary{
+    background:var(--accent);
+    color:#fff;
+}
+.output{
+    min-height:420px;
+    white-space:pre-wrap;
+    word-break:break-word;
+    background:#fff;
+}
+.tip{
+    margin-top:12px;
+    font-size:0.92rem;
+    color:var(--muted);
+    line-height:1.75;
+}
+.status{
+    margin-top:10px;
+    color:var(--accent);
+    font-size:0.95rem;
+}
+.copy-box{
+    min-height:420px;
+}
+@media (max-width: 900px){
+    .layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="header">
+        <h1>小說後台工具</h1>
+        <p>這是一個靜態管理頁。你可以選作品、填章節資訊、直接貼內容或上傳 txt，系統會幫你產生可貼進小說頁的章節物件。它不會自動寫回 GitHub，但能大幅降低你手動整理格式的成本。</p>
+    </div>
+
+    <div class="layout">
+        <section class="panel">
+            <h2>章節資料輸入</h2>
+
+            <div class="field">
+                <label for="novel-select">選擇作品</label>
+                <select id="novel-select" class="select">
+                    <option value="catfish">貓臉魚</option>
+                    <option value="eternal-beginning">亙古之初</option>
+                    <option value="custom">自訂作品</option>
+                </select>
+            </div>
+
+            <div class="field" id="custom-novel-field" style="display:none;">
+                <label for="custom-novel-title">自訂作品名稱</label>
+                <input id="custom-novel-title" class="input" type="text" placeholder="例如：星海餘燼">
+            </div>
+
+            <div class="field">
+                <label for="chapter-id">章節 ID</label>
+                <input id="chapter-id" class="input" type="text" placeholder="例如：ch1 或 prologue">
+            </div>
+
+            <div class="field">
+                <label for="chapter-label">章節顯示名稱</label>
+                <input id="chapter-label" class="input" type="text" placeholder="例如：第1章 / 序章">
+            </div>
+
+            <div class="field">
+                <label for="chapter-title">完整標題</label>
+                <input id="chapter-title" class="input" type="text" placeholder="例如：亙古之初-第1章">
+            </div>
+
+            <div class="field">
+                <label for="chapter-subtitle">章節一句話簡介</label>
+                <input id="chapter-subtitle" class="input" type="text" placeholder="例如：世界崩裂之前，名字先被喚醒。">
+            </div>
+
+            <div class="field">
+                <label for="chapter-file">上傳 txt 檔</label>
+                <input id="chapter-file" class="file" type="file" accept=".txt,text/plain">
+            </div>
+
+            <div class="field">
+                <label for="chapter-content">章節內容</label>
+                <textarea id="chapter-content" class="textarea" placeholder="可直接貼上全文，或先上傳 txt 再在這裡微調。"></textarea>
+            </div>
+
+            <div class="button-row">
+                <button class="button primary" id="generate-button" type="button">產生章節物件</button>
+                <button class="button" id="clear-button" type="button">清空</button>
+                <button class="button" id="fill-eternal-prologue" type="button">套用亙古之初範例</button>
+            </div>
+
+            <div class="status" id="status-text"></div>
+            <div class="tip">使用方式：先填好欄位，按「產生章節物件」，再把右側輸出的內容貼進對應小說頁的 <code>articlesData</code> 陣列中。</div>
+        </section>
+
+        <section class="panel">
+            <h2>輸出結果</h2>
+            <textarea id="output-text" class="textarea copy-box" readonly placeholder="產生後會出現在這裡"></textarea>
+            <div class="button-row" style="margin-top:12px;">
+                <button class="button primary" id="copy-button" type="button">複製輸出內容</button>
+            </div>
+            <div class="tip">
+                建議維護方式：每新增一章，就把這裡輸出的物件貼到對應小說頁的 <code>articlesData = [ ... ]</code> 裡面。<br>
+                未來如果你要，我可以再幫你進一步做成「讀取 JSON / TXT 檔」的版本，讓內容不必再塞進 HTML 裡。
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+const novelSelect = document.getElementById('novel-select');
+const customNovelField = document.getElementById('custom-novel-field');
+const customNovelTitle = document.getElementById('custom-novel-title');
+const chapterId = document.getElementById('chapter-id');
+const chapterLabel = document.getElementById('chapter-label');
+const chapterTitle = document.getElementById('chapter-title');
+const chapterSubtitle = document.getElementById('chapter-subtitle');
+const chapterFile = document.getElementById('chapter-file');
+const chapterContent = document.getElementById('chapter-content');
+const generateButton = document.getElementById('generate-button');
+const clearButton = document.getElementById('clear-button');
+const outputText = document.getElementById('output-text');
+const copyButton = document.getElementById('copy-button');
+const statusText = document.getElementById('status-text');
+const fillEternalPrologue = document.getElementById('fill-eternal-prologue');
+
+const novelDefaults = {
+    'catfish': '貓臉魚',
+    'eternal-beginning': '亙古之初'
+};
+
+function escapeTemplateLiteral(text) {
+    return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+}
+
+function getSelectedNovelName() {
+    if (novelSelect.value === 'custom') {
+        return customNovelTitle.value.trim();
+    }
+    return novelDefaults[novelSelect.value] || '';
+}
+
+novelSelect.addEventListener('change', () => {
+    customNovelField.style.display = novelSelect.value === 'custom' ? 'block' : 'none';
+});
+
+chapterFile.addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    chapterContent.value = text;
+    statusText.textContent = `已載入檔案：${file.name}`;
+});
+
+fillEternalPrologue.addEventListener('click', () => {
+    novelSelect.value = 'eternal-beginning';
+    customNovelField.style.display = 'none';
+    chapterId.value = 'prologue';
+    chapterLabel.value = '序章';
+    chapterTitle.value = '亙古之初-序章';
+    chapterSubtitle.value = '世界崩裂之前，名字先被喚醒。';
+    statusText.textContent = '已填入亙古之初序章範例欄位。';
+});
+
+generateButton.addEventListener('click', () => {
+    const novelName = getSelectedNovelName();
+    const id = chapterId.value.trim();
+    const label = chapterLabel.value.trim();
+    const title = chapterTitle.value.trim();
+    const subtitle = chapterSubtitle.value.trim();
+    const content = chapterContent.value;
+
+    if (!novelName) {
+        statusText.textContent = '請先填寫作品名稱。';
+        return;
+    }
+    if (!id || !label || !title || !content.trim()) {
+        statusText.textContent = '請至少填好章節 ID、顯示名稱、完整標題與內容。';
+        return;
+    }
+
+    const generated = `{
+    id: '${id}',
+    label: '${label}',
+    title: '${title}',
+    subtitle: '${subtitle}',
+    content: \`${escapeTemplateLiteral(content)}\`
+}`;
+
+    outputText.value = generated;
+    statusText.textContent = `已為《${novelName}》產生章節物件。`;
+});
+
+clearButton.addEventListener('click', () => {
+    chapterId.value = '';
+    chapterLabel.value = '';
+    chapterTitle.value = '';
+    chapterSubtitle.value = '';
+    chapterContent.value = '';
+    chapterFile.value = '';
+    outputText.value = '';
+    statusText.textContent = '已清空。';
+});
+
+copyButton.addEventListener('click', async () => {
+    if (!outputText.value.trim()) {
+        statusText.textContent = '目前沒有可複製的內容。';
+        return;
+    }
+    await navigator.clipboard.writeText(outputText.value);
+    statusText.textContent = '已複製到剪貼簿。';
+});
+</script>
+</body>
+</html>
