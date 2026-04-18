@@ -35,7 +35,7 @@
         }
 
         .sidebar {
-            width: 280px;
+            width: 300px;
             background-color: var(--sidebar-bg);
             display: flex;
             flex-direction: column;
@@ -56,6 +56,13 @@
             margin-top: 8px;
             font-size: 0.9rem;
             color: var(--text-light);
+        }
+
+        .sidebar-description {
+            margin-top: 14px;
+            font-size: 0.92rem;
+            line-height: 1.75;
+            color: var(--text-main);
         }
 
         .sidebar-home-link {
@@ -91,6 +98,13 @@
             font: inherit;
         }
 
+        .nav-item small {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
         .nav-item:hover { background-color: var(--sidebar-hover); }
         .nav-item:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
         .nav-item.active {
@@ -113,6 +127,18 @@
             padding: 40px 48px;
             border-radius: 12px;
             box-shadow: var(--shadow-soft);
+        }
+
+        .series-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            border-radius: 999px;
+            background: var(--sidebar-bg);
+            color: var(--accent-color);
+            font-size: 0.88rem;
+            font-weight: 700;
         }
 
         .article-title {
@@ -231,7 +257,8 @@
 <aside class="sidebar" aria-label="文章導覽側欄">
 <div class="sidebar-header">
     亙古之初
-    <div class="sidebar-subtitle">章節閱讀</div>
+    <div class="sidebar-subtitle">序章已上線，後續章節可持續擴充</div>
+    <div class="sidebar-description">目前已建立完整章節架構。你之後只要上傳新章，我就可以直接接到這部小說裡，保留手機閱讀、字級調整與章節翻頁。</div>
     <a class="sidebar-home-link" href="index.html">← 回到首頁</a>
 </div>
 <nav class="nav-list" id="sidebar-list" aria-label="文章目錄"></nav>
@@ -245,6 +272,7 @@
 <button class="mobile-font-button" id="mobile-font-increase" type="button" aria-label="放大字體">A＋</button>
 </div>
 </div>
+<div class="series-badge" id="series-badge">作品：亙古之初</div>
 <h1 class="article-title" id="article-title">載入中...</h1>
 <div class="article-meta" id="article-meta" aria-live="polite"></div>
 <div class="article-content" id="article-content"></div>
@@ -255,9 +283,18 @@
 </article>
 </main>
 <script>
+const novelInfo = {
+    seriesTitle: '亙古之初',
+    seriesStatus: '連載中',
+    chapterCountLabel: '目前 1 章'
+};
+
 const articlesData = [
     {
-        title: "亙古之初-序章",
+        id: 'prologue',
+        label: '序章',
+        title: '亙古之初-序章',
+        subtitle: '世界崩裂之前，名字先被喚醒。',
         content: `序章
 
 『嗯……？』
@@ -500,6 +537,7 @@ const mobileNextButton = document.getElementById('mobile-next-button');
 const mobileFontDecreaseButton = document.getElementById('mobile-font-decrease');
 const mobileFontIncreaseButton = document.getElementById('mobile-font-increase');
 const mobileFontSizeLabel = document.getElementById('mobile-font-size-label');
+const seriesBadge = document.getElementById('series-badge');
 let mobileFontPresetIndex = 1;
 
 function getInitialIndex() {
@@ -529,6 +567,10 @@ function applyMobileFontPreset(index) {
     window.localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(index));
 }
 
+function updateSeriesBadge() {
+    seriesBadge.textContent = `作品：${novelInfo.seriesTitle}｜${novelInfo.seriesStatus}｜${novelInfo.chapterCountLabel}`;
+}
+
 function updateActiveState(activeButton) {
     const items = sidebarList.querySelectorAll('.nav-item');
     items.forEach((item) => {
@@ -552,7 +594,7 @@ function updateMobileButtons(index) {
     mobilePrevButton.disabled = !hasPrev;
 
     if (hasPrev) {
-        mobilePrevButton.textContent = `上一頁｜${articlesData[index - 1].title}`;
+        mobilePrevButton.textContent = `上一頁｜${articlesData[index - 1].label || articlesData[index - 1].title}`;
         mobilePrevButton.setAttribute('aria-label', `上一頁：${articlesData[index - 1].title}`);
         mobilePrevButton.onclick = () => navigateToArticle(index - 1);
     } else {
@@ -567,7 +609,7 @@ function updateMobileButtons(index) {
         mobileNextButton.setAttribute('aria-label', `回到第一頁：${articlesData[0].title}`);
         mobileNextButton.onclick = () => navigateToArticle(0);
     } else {
-        mobileNextButton.textContent = `下一頁｜${articlesData[index + 1].title}`;
+        mobileNextButton.textContent = `下一頁｜${articlesData[index + 1].label || articlesData[index + 1].title}`;
         mobileNextButton.setAttribute('aria-label', `下一頁：${articlesData[index + 1].title}`);
         mobileNextButton.onclick = () => navigateToArticle(index + 1);
     }
@@ -579,9 +621,9 @@ function loadArticle(index, btnElement, options = {}) {
     updateActiveState(btnElement);
     updateMobileButtons(index);
     articleTitle.textContent = article.title;
-    articleMeta.textContent = `第 ${index + 1} 篇，共 ${articlesData.length} 篇`;
+    articleMeta.textContent = `${article.label || `第 ${index + 1} 篇`}｜${article.subtitle || novelInfo.chapterCountLabel}`;
     articleContent.textContent = article.content;
-    document.title = `${article.title} - 亙古之初`;
+    document.title = `${article.title} - ${novelInfo.seriesTitle}`;
 
     if (window.location.hash !== `#article-${index}`) {
         history.replaceState(null, '', `#article-${index}`);
@@ -597,7 +639,7 @@ function createNavItem(article, index) {
     const btn = document.createElement('button');
     btn.className = 'nav-item';
     btn.type = 'button';
-    btn.textContent = article.title;
+    btn.innerHTML = `${article.label || article.title}<small>${article.subtitle || '章節內容'}</small>`;
     btn.setAttribute('aria-label', `閱讀 ${article.title}`);
     btn.addEventListener('click', () => loadArticle(index, btn));
     return btn;
@@ -618,6 +660,7 @@ function initMobileFontControls() {
 }
 
 function initSidebar() {
+    updateSeriesBadge();
     const initialIndex = getInitialIndex();
     articlesData.forEach((article, index) => {
         const btn = createNavItem(article, index);
