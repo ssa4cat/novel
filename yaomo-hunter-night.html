@@ -4,32 +4,566 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>妖魔獵狩夜 - 文章閱讀</title>
+<meta name="description" content="妖魔獵狩夜小說閱讀頁面，採外部章節檔案載入。"/>
 <style>
-body{margin:0;font-family:"Noto Serif TC","Microsoft JhengHei",serif;background:#FDFBF7;display:flex;color:#4A4036}
-.sidebar{width:300px;background:#F3EBE1;padding:20px}
-.nav-item{padding:14px;cursor:pointer}
-.nav-item.active{background:#D4B895}
-.content{flex:1;padding:40px 60px}
-.article{max-width:800px;margin:auto;background:#fff;padding:40px;border-radius:12px}
-</style>
+        :root {
+            --bg-color: #FDFBF7;
+            --sidebar-bg: #F3EBE1;
+            --sidebar-hover: #E8DAC6;
+            --sidebar-active: #D4B895;
+            --surface-color: #FFFFFF;
+            --text-main: #4A4036;
+            --text-light: #7A6F64;
+            --accent-color: #C08552;
+            --border-soft: rgba(0, 0, 0, 0.08);
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --focus-ring: 0 0 0 3px rgba(192, 133, 82, 0.28);
+            --mobile-article-font-size: 1rem;
+            --mobile-article-line-height: 1.9;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 30px 24px 20px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-soft);
+            letter-spacing: 1px;
+        }
+
+        .sidebar-home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 16px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-home-link:hover {
+            color: var(--accent-color);
+        }
+
+        .nav-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .nav-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nav-list::-webkit-scrollbar-thumb {
+            background: #D4B895;
+            border-radius: 3px;
+        }
+
+        .nav-item {
+            width: 100%;
+            padding: 16px 24px;
+            cursor: pointer;
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+            font-size: 1rem;
+            line-height: 1.5;
+            border: 0;
+            border-left: 4px solid transparent;
+            background: transparent;
+            color: var(--text-main);
+            text-align: left;
+            font: inherit;
+        }
+
+        .nav-item small {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        .nav-item:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .nav-item:focus-visible {
+            outline: none;
+            box-shadow: inset var(--focus-ring);
+        }
+
+        .nav-item.active {
+            background-color: var(--sidebar-active);
+            border-left-color: var(--accent-color);
+            font-weight: 700;
+            color: #332B23;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+        }
+
+        .article-container {
+            max-width: 860px;
+            margin: 0 auto;
+            background: var(--surface-color);
+            padding: 40px 48px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .series-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            border-radius: 999px;
+            background: var(--sidebar-bg);
+            color: var(--accent-color);
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .article-title {
+            font-family: "DFKai-SB", "BiauKai", "標楷體", STKaiti, KaiTi, serif;
+            font-size: 1.95rem;
+            line-height: 1.4;
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--sidebar-bg);
+            padding-bottom: 16px;
+        }
+
+        .article-meta {
+            margin-bottom: 28px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .article-content {
+            font-size: 1.05rem;
+            line-height: 1.95;
+            color: var(--text-main);
+            letter-spacing: 0.2px;
+            word-break: break-word;
+        }
+
+        .article-content p {
+            margin: 0 0 1.15em;
+        }
+
+        .article-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .mobile-reading-toolbar,
+        .mobile-bottom-nav {
+            display: none;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: 16px;
+            top: -48px;
+            background: #FFFFFF;
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            box-shadow: var(--shadow-soft);
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 12px;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+
+            .nav-list {
+                max-height: 220px;
+            }
+
+            .content-area {
+                padding: 24px 16px 32px;
+                overflow: visible;
+            }
+
+            .article-container {
+                padding: 28px 20px;
+                border-radius: 10px;
+            }
+
+            .article-title {
+                font-size: 1.65rem;
+            }
+
+            .mobile-reading-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 18px;
+                padding: 12px 14px;
+                border-radius: 12px;
+                background: var(--sidebar-bg);
+            }
+
+            .mobile-reading-label {
+                color: var(--text-light);
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+
+            .mobile-font-controls {
+                display: flex;
+                gap: 8px;
+            }
+
+            .mobile-font-button {
+                min-width: 44px;
+                min-height: 40px;
+                border: 0;
+                border-radius: 10px;
+                background: #FFFFFF;
+                color: var(--text-main);
+                font: inherit;
+                font-size: 1rem;
+                font-weight: 700;
+                cursor: pointer;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+
+            .mobile-font-button:focus-visible {
+                outline: none;
+                box-shadow: var(--focus-ring);
+            }
+
+            .article-content {
+                font-size: var(--mobile-article-font-size);
+                line-height: var(--mobile-article-line-height);
+            }
+
+            .mobile-bottom-nav {
+                display: flex;
+                gap: 12px;
+                margin-top: 28px;
+                padding-top: 20px;
+                border-top: 1px solid var(--border-soft);
+            }
+
+            .mobile-chapter-button {
+                flex: 1;
+                min-height: 48px;
+                border: 0;
+                border-radius: 12px;
+                background: var(--sidebar-bg);
+                color: var(--text-main);
+                font: inherit;
+                font-size: 0.98rem;
+                padding: 12px 14px;
+                text-align: center;
+                cursor: pointer;
+            }
+
+            .mobile-chapter-button.next {
+                background: var(--accent-color);
+                color: #FFFDF9;
+            }
+
+            .mobile-chapter-button:focus-visible {
+                outline: none;
+                box-shadow: var(--focus-ring);
+            }
+
+            .mobile-chapter-button[hidden] {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .nav-item {
+                transition: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="sidebar">
-<h2>妖魔獵狩夜</h2>
-<div id="nav"></div>
+<a class="skip-link" href="#main-content">跳到文章內容</a>
+<aside class="sidebar" aria-label="文章導覽側欄">
+<div class="sidebar-header">
+    妖魔獵狩夜
+    <a class="sidebar-home-link" href="index.html">← 回到首頁</a>
 </div>
-<div class="content">
-<div class="article">
-<h1 id="title">尚未發布章節</h1>
-<div id="content">請先在後台新增章節</div>
+<nav class="nav-list" id="sidebar-list" aria-label="文章目錄"></nav>
+</aside>
+<main class="content-area" id="main-content" tabindex="-1">
+<article class="article-container">
+<div class="mobile-reading-toolbar" aria-label="手機閱讀設定">
+<span class="mobile-reading-label" id="mobile-font-size-label">字體大小：標準</span>
+<div class="mobile-font-controls">
+<button class="mobile-font-button" id="mobile-font-decrease" type="button" aria-label="縮小字體">A−</button>
+<button class="mobile-font-button" id="mobile-font-increase" type="button" aria-label="放大字體">A＋</button>
 </div>
 </div>
+<div class="series-badge" id="series-badge">作品：妖魔獵狩夜</div>
+<h1 class="article-title" id="article-title">尚未發布章節</h1>
+<div class="article-meta" id="article-meta" aria-live="polite">請先在後台新增章節</div>
+<div class="article-content" id="article-content">目前尚無可閱讀章節。</div>
+<div class="mobile-bottom-nav" aria-label="手機章節導覽">
+<button class="mobile-chapter-button prev" id="mobile-prev-button" type="button">上一頁</button>
+<button class="mobile-chapter-button next" id="mobile-next-button" type="button">下一頁</button>
+</div>
+</article>
+</main>
 <script>
-fetch('data/yaomo.json')
-.then(r=>r.json())
-.then(data=>{
- if(data.length===0)return;
+const novelInfo = {
+    seriesTitle: '妖魔獵狩夜',
+    seriesStatus: '連載中',
+    dataFile: 'data/yaomo.json'
+};
+
+const FONT_SIZE_STORAGE_KEY = 'novel-mobile-font-size-index';
+const MOBILE_FONT_PRESETS = [
+    { label: '較小', fontSize: '0.92rem', lineHeight: '1.82' },
+    { label: '標準', fontSize: '1rem', lineHeight: '1.9' },
+    { label: '較大', fontSize: '1.08rem', lineHeight: '1.98' },
+    { label: '很大', fontSize: '1.16rem', lineHeight: '2.05' }
+];
+
+const sidebarList = document.getElementById('sidebar-list');
+const articleTitle = document.getElementById('article-title');
+const articleMeta = document.getElementById('article-meta');
+const articleContent = document.getElementById('article-content');
+const mainContent = document.getElementById('main-content');
+const mobilePrevButton = document.getElementById('mobile-prev-button');
+const mobileNextButton = document.getElementById('mobile-next-button');
+const mobileFontDecreaseButton = document.getElementById('mobile-font-decrease');
+const mobileFontIncreaseButton = document.getElementById('mobile-font-increase');
+const mobileFontSizeLabel = document.getElementById('mobile-font-size-label');
+const seriesBadge = document.getElementById('series-badge');
+
+let mobileFontPresetIndex = 1;
+let articlesData = [];
+
+function getInitialIndex() {
+    const matched = window.location.hash.match(/^#article-(\d+)$/);
+    if (!matched) return 0;
+    const index = Number(matched[1]);
+    return Number.isInteger(index) && index >= 0 && index < articlesData.length ? index : 0;
+}
+
+function getStoredFontPresetIndex() {
+    const savedIndex = Number(window.localStorage.getItem(FONT_SIZE_STORAGE_KEY));
+    if (Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < MOBILE_FONT_PRESETS.length) {
+        return savedIndex;
+    }
+    return 1;
+}
+
+function applyMobileFontPreset(index) {
+    const preset = MOBILE_FONT_PRESETS[index];
+    if (!preset) return;
+    mobileFontPresetIndex = index;
+    document.documentElement.style.setProperty('--mobile-article-font-size', preset.fontSize);
+    document.documentElement.style.setProperty('--mobile-article-line-height', preset.lineHeight);
+    mobileFontSizeLabel.textContent = `字體大小：${preset.label}`;
+    mobileFontDecreaseButton.disabled = index === 0;
+    mobileFontIncreaseButton.disabled = index === MOBILE_FONT_PRESETS.length - 1;
+    window.localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(index));
+}
+
+function updateSeriesBadge() {
+    seriesBadge.textContent = `作品：${novelInfo.seriesTitle}｜${novelInfo.seriesStatus}｜目前 ${articlesData.length} 章`;
+}
+
+function updateActiveState(activeButton) {
+    const items = sidebarList.querySelectorAll('.nav-item');
+    items.forEach((item) => {
+        const isActive = item === activeButton;
+        item.classList.toggle('active', isActive);
+        item.setAttribute('aria-current', isActive ? 'page' : 'false');
+    });
+}
+
+function navigateToArticle(index) {
+    const navButtons = sidebarList.querySelectorAll('.nav-item');
+    const targetButton = navButtons[index];
+    if (targetButton) {
+        loadArticle(index, targetButton);
+    }
+}
+
+function updateMobileButtons(index) {
+    const hasPrev = index > 0;
+    mobilePrevButton.hidden = !hasPrev;
+    mobilePrevButton.disabled = !hasPrev;
+
+    if (hasPrev) {
+        mobilePrevButton.textContent = `上一頁｜${articlesData[index - 1].label || articlesData[index - 1].title}`;
+        mobilePrevButton.setAttribute('aria-label', `上一頁：${articlesData[index - 1].title}`);
+        mobilePrevButton.onclick = () => navigateToArticle(index - 1);
+    } else {
+        mobilePrevButton.textContent = '上一頁';
+        mobilePrevButton.removeAttribute('aria-label');
+        mobilePrevButton.onclick = null;
+    }
+
+    const isLast = index === articlesData.length - 1;
+    if (isLast) {
+        mobileNextButton.textContent = '回到第一頁';
+        mobileNextButton.setAttribute('aria-label', `回到第一頁：${articlesData[0].title}`);
+        mobileNextButton.onclick = () => navigateToArticle(0);
+    } else {
+        mobileNextButton.textContent = `下一頁｜${articlesData[index + 1].label || articlesData[index + 1].title}`;
+        mobileNextButton.setAttribute('aria-label', `下一頁：${articlesData[index + 1].title}`);
+        mobileNextButton.onclick = () => navigateToArticle(index + 1);
+    }
+}
+
+async function loadArticle(index, btnElement, options = {}) {
+    const article = articlesData[index];
+    if (!article) return;
+
+    updateActiveState(btnElement);
+    updateMobileButtons(index);
+    articleTitle.textContent = article.title;
+    articleMeta.textContent = `${article.label || `第 ${index + 1} 篇`}｜${article.subtitle || ''}`;
+    articleContent.innerHTML = '載入章節中...';
+    document.title = `${article.title} - ${novelInfo.seriesTitle}`;
+
+    if (window.location.hash !== `#article-${index}`) {
+        history.replaceState(null, '', `#article-${index}`);
+    }
+
+    try {
+        const response = await fetch(article.file);
+        if (!response.ok) throw new Error('無法載入章節內容');
+        const html = await response.text();
+        articleContent.innerHTML = html;
+    } catch (error) {
+        articleContent.textContent = '章節內容載入失敗，請稍後再試。';
+    }
+
+    if (!options.preserveScroll) {
+        mainContent.scrollTop = 0;
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+}
+
+function createNavItem(article, index) {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item';
+    btn.type = 'button';
+    btn.innerHTML = `${article.label || article.title}<small>${article.subtitle || '章節內容'}</small>`;
+    btn.setAttribute('aria-label', `閱讀 ${article.title}`);
+    btn.addEventListener('click', () => loadArticle(index, btn));
+    return btn;
+}
+
+function initMobileFontControls() {
+    applyMobileFontPreset(getStoredFontPresetIndex());
+    mobileFontDecreaseButton.addEventListener('click', () => {
+        if (mobileFontPresetIndex > 0) {
+            applyMobileFontPreset(mobileFontPresetIndex - 1);
+        }
+    });
+    mobileFontIncreaseButton.addEventListener('click', () => {
+        if (mobileFontPresetIndex < MOBILE_FONT_PRESETS.length - 1) {
+            applyMobileFontPreset(mobileFontPresetIndex + 1);
+        }
+    });
+}
+
+async function initSidebar() {
+    try {
+        const response = await fetch(novelInfo.dataFile);
+        if (!response.ok) throw new Error('無法載入章節索引');
+        articlesData = await response.json();
+    } catch (error) {
+        articleTitle.textContent = '載入失敗';
+        articleMeta.textContent = '';
+        articleContent.textContent = '章節索引載入失敗，請稍後再試。';
+        return;
+    }
+
+    updateSeriesBadge();
+    const initialIndex = getInitialIndex();
+    sidebarList.innerHTML = '';
+
+    if (articlesData.length === 0) {
+        articleTitle.textContent = '尚未發布章節';
+        articleMeta.textContent = '請先在後台新增章節';
+        articleContent.textContent = '目前尚無可閱讀章節。';
+        mobilePrevButton.hidden = true;
+        mobileNextButton.hidden = true;
+        return;
+    }
+
+    articlesData.forEach((article, index) => {
+        const btn = createNavItem(article, index);
+        sidebarList.appendChild(btn);
+    });
+
+    const navButtons = sidebarList.querySelectorAll('.nav-item');
+    const initialButton = navButtons[initialIndex] || navButtons[0];
+    if (initialButton) {
+        loadArticle(initialIndex, initialButton, { preserveScroll: true });
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    const index = getInitialIndex();
+    const navButtons = sidebarList.querySelectorAll('.nav-item');
+    const targetButton = navButtons[index];
+    if (targetButton) {
+        loadArticle(index, targetButton, { preserveScroll: true });
+    }
 });
+
+initMobileFontControls();
+initSidebar();
 </script>
 </body>
 </html>
