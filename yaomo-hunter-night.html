@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>妖魔獵狩夜 - 文章閱讀</title>
+<style>
+body{margin:0;font-family:"Noto Serif TC","Microsoft JhengHei",serif;background:#FDFBF7;display:flex;color:#4A4036}
+.sidebar{width:300px;background:#F3EBE1;padding:20px}
+.nav-item{padding:14px;cursor:pointer}
+.nav-item.active{background:#D4B895}
+.content{flex:1;padding:40px 60px}
+.article{max-width:800px;margin:auto;background:#fff;padding:40px;border-radius:12px}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<h2>妖魔獵狩夜</h2>
+<div id="nav"></div>
+</div>
+<div class="content">
+<div class="article">
+<h1 id="title">尚未發布章節</h1>
+<div id="content">請先在後台新增章節</div>
+</div>
+</div>
+<script>
+fetch('data/yaomo.json')
+.then(r=>r.json())
+.then(data=>{
+ if(data.length===0)return;
+});
+</script>
+</body>
+</html>
